@@ -1,0 +1,145 @@
+{% extends "admin/base.html" %} {% block content %}
+<div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+  <header
+    class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-10"
+  >
+    <div>
+      <h2 class="text-base font-semibold text-slate-800">Dashboard</h2>
+      <p id="currentDate" class="text-xs text-slate-400">Đang cập nhập...</p>
+    </div>
+
+    <div
+      class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full"
+    >
+      <div
+        class="w-7 h-7 bg-slate-900 text-yellow-400 rounded-full flex items-center justify-center font-bold text-xs"
+      >
+        A
+      </div>
+      <span class="text-sm font-medium text-slate-700">admin</span>
+    </div>
+  </header>
+
+    <div class="p-8 max-w-6xl mx-auto w-full space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <i class="fas fa-calendar-day text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800">Báo cáo theo ngày</h3>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Xuất danh sách sinh viên có mặt và vắng mặt trong một ngày cụ thể.</p>
+                <form action="{{ url_for('admin.process_export') }}" method="GET" class="flex flex-col flex-1">
+                    <input type="hidden" name="export_type" value="daily">
+                    
+                    <div class="space-y-4 flex-1">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Chọn ngày</label>
+                            <input type="date" name="target_date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-slate-600" value="{{today}}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Lớp / Môn học</label>
+                            <select name="class_name" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-slate-600 bg-white">
+                                <option value="all">Tất cả các lớp</option>
+                                {% for c in classes %}
+                                    <option value="{{ c }}">{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="mt-6 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i> Xuất File Excel
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <i class="fas fa-calendar-alt text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800">Báo cáo tổng hợp</h3>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Xuất điểm danh theo các ngày, tự động tính tổng số buổi vắng và tỷ lệ đi học.</p>
+                <form action="{{ url_for('admin.process_export') }}" method="GET" class="flex flex-col flex-1">
+                    <input type="hidden" name="export_type" value="summary">
+                    
+                    <div class="space-y-4 flex-1">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Từ ngày</label>
+                                <input type="date" name="start_date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-600" value="{{ first_day }}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Đến ngày</label>
+                                <input type="date" name="end_date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-600" value="{{ today }}">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Cảnh báo cấm thi</label>
+                            <div class="flex items-center mt-2">
+                                <input type="checkbox" id="warning" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" checked>
+                                <label for="warning" class="ml-2 text-sm text-slate-600">Tự động bôi đỏ sinh viên vắng > 20%</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="mt-6 w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                        <i class="fas fa-file-export"></i> Tạo Báo Cáo Tổng Hợp
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 mt-6">
+            <div class="px-6 py-4 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-800">Lịch sử xuất báo cáo gần đây</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-500 font-medium">
+                        <tr>
+                            <th class="px-6 py-3">Tên File</th>
+                            <th class="px-6 py-3">Loại báo cáo</th>
+                            <th class="px-6 py-3">Thời gian tạo</th>
+                            <th class="px-6 py-3 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% if history %}
+                            {% for item in history %}
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-medium text-slate-800 flex items-center gap-2">
+                                    <i class="fas fa-file-excel text-emerald-500"></i> {{ item.filename }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if item.type == 'Theo ngày' %}
+                                    <span class="px-2 py-1 bg-emerald-50 text-emerald-600 text-xs rounded-md">{{ item.type }}</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs rounded-md">{{ item.type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">{{ item.time }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="{{ item.url }}" class="text-slate-400 hover:text-emerald-500 transition-colors">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-400">
+                                    Chưa có dữ liệu xuất báo cáo nào trong phiên làm việc này.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

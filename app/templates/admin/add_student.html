@@ -1,0 +1,238 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+    <div class="flex-1 flex flex-col overflow-y-auto">
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Thêm sinh viên mới</h2>
+                <p id="currentDate" class="text-sm text-slate-500">Đang cập nhập...</p>
+            </div>
+            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-2 rounded-full shadow-sm">
+                <div class="w-8 h-8 bg-slate-900 text-yellow-500 rounded-full flex items-center justify-center font-bold text-sm">A</div>
+                <span class="text-sm font-semibold text-slate-700">admin</span>
+            </div>
+        </header>
+
+        <main class="p-8 max-w-6xl w-full mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                    <p class="text-sm text-slate-600 font-medium">Vui lòng nhập chính xác thông tin học tập và chụp ảnh chân dung sinh viên để AI lưu cấu trúc dữ liệu quét.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+                    <div class="space-y-5">
+                        <h3 class="text-lg font-bold text-slate-800 border-l-4 border-slate-900 pl-3">Thông tin cơ bản</h3>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Họ và tên sinh viên</label>
+                            <input id="fullNameInput" type="text" required placeholder="Ví dụ: Phùng Minh Tường" 
+                                class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 bg-slate-50/50 shadow-inner">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mã số sinh viên (Duy nhất)</label>
+                            <input id="studentIdInput" type="text" required placeholder="Ví dụ: 227480201085" 
+                                class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 bg-slate-50/50 shadow-inner">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Lớp học</label>
+                            <input id="classNameInput" type="text" placeholder="Ví dụ: 16DTH2" 
+                                class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 bg-slate-50/50 shadow-inner">
+                        </div>
+
+                        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-xl p-4 mt-6">
+                            <div class="flex gap-2">
+                                <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <p class="text-xs text-amber-800 leading-relaxed">
+                                    <strong class="font-bold">Quy trình:</strong> Sau khi điền xong thông tin, bạn nhìn thẳng vào camera bên phải, bấm nút <span class="font-semibold">Mở camera</span>, giữ yên khuôn mặt và bấm <span class="font-semibold">Chụp ảnh quét</span> để lấy mẫu trích xuất đặc trưng sinh học.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col justify-between space-y-4">
+                        <h3 class="text-lg font-bold text-slate-800 border-l-4 border-slate-900 pl-3">Dữ liệu Face ID</h3>
+
+                        <div class="flex-1 bg-slate-950 rounded-xl relative border-4 border-slate-900 shadow-inner min-h-[260px] flex flex-col items-center justify-center overflow-hidden group">
+
+                            <img id="videoStream" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
+
+                            <div id="cameraPlaceholder" class="absolute inset-0 bg-slate-900 flex items-center justify-center text-slate-500">
+                                <svg class="w-16 h-16 text-slate-700 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                <span class="absolute bottom-6 text-xs text-slate-400 font-medium tracking-wide">Camera đang tắt. Vui lòng bấm kích hoạt.</span>
+                            </div>
+
+                            <div id="btnLive" class="absolute hidden top-3 left-3 z-20 bg-red-600 text-white font-bold px-2 py-0.5 rounded-full text-[10px] animate-pulse shadow-lg flex items-center gap-1">
+                                <div class="w-1.5 h-1.5 bg-white rounded-full"></div> LIVE
+                            </div>
+
+                            <div class="absolute inset-10 border border-slate-500/20 rounded-full pointer-events-none flex items-center justify-center">
+                                <div class="w-20 h-20 border border-slate-500/30 border-dashed rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="btnOpenCam" type="button" class="bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-xs shadow-md hover:bg-slate-700 active:scale-95 transition flex items-center justify-center gap-2">
+                                <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Mở Camera
+                            </button>
+                            <button id="btnCapture" type="button" class="bg-slate-200 text-slate-400 cursor-not-allowed font-semibold py-2.5 px-4 rounded-xl text-xs shadow-sm flex items-center justify-center gap-2" disabled>
+                                📷 Chụp ảnh quét (0/20)
+                            </button>
+                        </div>       
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 border-t border-slate-200 px-8 py-5 flex justify-end gap-3">
+                    <button type="button" onclick="window.location.reload();" class="bg-white border border-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl shadow-sm hover:bg-slate-100 transition duration-200 text-sm">
+                        Hủy bỏ
+                    </button>
+                    <button id="btnSaveToDB" type="button" class="bg-slate-900 text-yellow-500 font-bold py-3 px-8 rounded-xl shadow-md hover:bg-slate-800 transition duration-200 uppercase tracking-wider text-sm">
+                        Lưu sinh viên vào DB
+                    </button>
+                    <!-- <button id="testloading" type="button" class="bg-slate-900 font-bold py-3 px-8 rounded-xl shadow-md hover:bg-slate-800 transition duration-200 uppercase tracking-wider text-sm">
+                        test loading
+                    </button> -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div>
+
+    </div>
+    <!-- <script>
+        const testloading = document.getElementById('testloading');
+        testloading.addEventListener('click', ()=>{
+            showLoader("Đã hoạt động... vui lòng chờ 5s để tắt!");
+            setTimeout(()=>{
+                hideLoader();
+            }, 5000);
+        });
+    </script> -->
+    <script>
+        const btnOpenCam = document.getElementById('btnOpenCam');
+        const videoImg = document.getElementById('videoStream');
+        const btnLive = document.getElementById('btnLive');
+        const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        const btnCapture = document.getElementById('btnCapture');
+        const btnSaveToDB = document.getElementById('btnSaveToDB');
+
+        let isCameraOn = false;
+        let captureCount = 0;
+        const MAX_CAPTURES = 20;
+
+        btnOpenCam.addEventListener('click', function(){
+            if(!isCameraOn){
+                btnLive.classList.remove('hidden');
+                videoImg.classList.remove('hidden');
+                cameraPlaceholder.classList.add('hidden');
+                videoImg.src = "{{url_for('admin.video_feed')}}";
+
+                this.classList.replace('bg-slate-800', 'bg-emerald-600');
+                this.innerHTML = '<span class="w-2 h-2 bg-white animate-pulse rounded-full"></span> Camera đang chạy';
+
+                // Mở khóa nút chụp ảnh
+                btnCapture.disabled = false;
+                btnCapture.classList.replace('bg-slate-200', 'bg-blue-600');
+                btnCapture.classList.replace('text-slate-400', 'text-white');
+                btnCapture.classList.remove('cursor-not-allowed');
+                isCameraOn = true;
+            }
+            else{
+                videoImg.src = "";
+                videoImg.classList.add('hidden');
+                cameraPlaceholder.classList.remove('hidden');
+                btnLive.classList.add('hidden');
+
+                this.classList.replace('bg-red-600', 'bg-slate-800');
+                this.innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Mở Camera';
+                btnCapture.disabled = true;
+                btnCapture.classList.replace('bg-blue-600', 'bg-slate-200');
+                btnCapture.classList.replace('text-white', 'text-slate-400');
+                btnCapture.classList.add('cursor-not-allowed');
+                isCameraOn = false;
+            }
+        });
+
+        btnCapture.addEventListener('click', function(){
+            const studentId = document.getElementById('studentIdInput').value.trim();
+
+            if(studentId == ""){
+                alert("Vui lòng nhập Mã số sinh viên trước khi chụp!");
+                return;
+            }
+            if (captureCount >= MAX_CAPTURES) {
+                alert("Đã chụp đủ " + MAX_CAPTURES + " ảnh!");
+                return;
+            }
+
+            captureCount++;
+
+            fetch("{{url_for('admin.capture_face')}}",{
+                method: "POST",
+                headers: {"Content-Type" : "application/json"},
+                body: JSON.stringify({student_id: studentId, count: captureCount})
+            })
+            .then(res=>res.json())
+            .then(data =>{
+                if(data.status == "success"){
+                    //Change the number on the btn
+                    btnCapture.innerHTML = '📷 Chụp ảnh quét (' + captureCount + '/' + MAX_CAPTURES + ')';
+                    if(captureCount == MAX_CAPTURES){
+                        btnCapture.classList.replace('bg-blue-600', 'bg-emerald-600');
+                        btnCapture.innerHTML = '✅ Đã chụp xong!';
+                    }
+                }
+                else{
+                        alert("Lỗi: " + data.message);
+                        captureCount--;
+                }
+            });
+        });
+
+        btnSaveToDB.addEventListener('click', function(){
+            const sId = document.getElementById('studentIdInput').value.trim();
+            const name = document.getElementById('fullNameInput').value.trim();
+            const cName = document.getElementById('classNameInput').value.trim();
+
+            const hasFaceSaved = (captureCount >= MAX_CAPTURES);
+            
+            if (!sId || !name || !cName) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+            if(!hasFaceSaved){
+                alert("Bạn phải chụp đủ 20 bức ảnh khuôn mặt trước khi lưu!");
+                return;
+            }
+            showLoader("Đang đồng bộ Face ID. Vui lòng chờ...");
+
+            fetch("{{url_for('admin.add_student_db')}}",{
+                method: 'POST',
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    student_id: sId,
+                    full_name: name,
+                    class_name: cName,
+                    face_saved: hasFaceSaved
+                })
+            })
+            .then(res=>res.json())
+            .then(data => {
+                hideLoader();
+                if(data.status == "success"){
+                    alert(data.message);
+                    window.location.reload();
+                }
+                else {
+                    alert("Lỗi: " + data.message);
+                }
+            })
+            .catch(err =>{
+                hideLoader();
+                alert("Lỗi kết nối đến máy chủ!");
+            });
+        });
+    </script>
+{% endblock %}

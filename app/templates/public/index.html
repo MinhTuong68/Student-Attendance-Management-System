@@ -1,0 +1,274 @@
+{% extends "public/base.html" %}
+
+{% block content %}
+
+<div class="flex h-screen bg-slate-950 overflow-hidden">
+    <!-- left column: camera -->
+    <div class="flex-1 relative flex flex-col min-w-0">
+        <!-- video stream -->
+        <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-950">
+            <img  id="cameraFeed" src="{{ url_for('public.video_feed') }}" alt="" class="absolute inset-0 w-full h-full object-cover">
+            <!-- Khung nhận diện 4 góc -->
+            <div class="absolute" style="width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-55%);">
+                <div class="focus-edge absolute top-0 left-0 w-6 h-6 border-t-[3px] border-l-[3px] border-emerald-400"></div>
+                <div class="focus-edge absolute top-0 right-0 w-6 h-6 border-t-[3px] border-r-[3px] border-emerald-400"></div>
+                <div class="focus-edge absolute bottom-0 left-0 w-6 h-6 border-b-[3px] border-l-[3px] border-emerald-400"></div>
+                <div class="focus-edge absolute bottom-0 right-0 w-6 h-6 border-b-[3px] border-r-[3px] border-emerald-400"></div>
+                <!-- Viền khung mờ -->
+                <div id="focusBox" class="absolute inset-0 border border-emerald-400/30 rounded-xl transition-colors duration-300"></div>
+            </div>
+            <!-- Badge LIVE -->
+            <div class="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 shadow-lg">
+                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div> LIVE
+            </div>
+
+            <div id="similarityBadge" class="absolute top-4 right-4 bg-black/50 backdrop-blur rounded-xl px-3 py-2 text-center">
+                <div id="matchdegree" class="text-xs text-slate-400 mb-1">Độ khớp</div>
+                <div id="similarityValue" class="text-xl font-bold text-emerald-400">Sẵn sàng</div>
+                <div class="w-10 h-1 bg-slate-700 rounded-full mt-1 mx-auto overflow-hidden">
+                    <div id="similarityBar" class="h-full bg-emerald-400 rounded-full" style="width:100%"></div>
+                </div>
+            </div>
+
+            <!-- Kết quả nhận diện (overlay phía dưới) -->
+            <div id="resultOverlay" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-5 pb-4 pt-10 hidden">
+                <div id="resultName" class="text-emerald-400 text-2xl font-semibold"></div>
+                <div class="flex items-center gap-3 mt-1">
+                    <span id="resultMSSV" class="text-slate-400 text-sm"></span>
+                    <span class="text-slate-600">·</span>
+                    <span id="resultScore" class="text-slate-400 text-sm"></span>
+                </div>
+            </div>
+
+            <!-- Trạng thái đang quét (mặc định) -->
+            <div id="scanningStatus" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-5 pb-4 pt-10">
+                <div class="text-slate-300 text-base font-medium">Đang quét khuôn mặt...</div>
+                <div class="text-slate-500 text-sm mt-1">Vui lòng nhìn thẳng vào camera</div>
+            </div>
+        </div>
+
+         <div class="px-5 py-3 bg-black/40 backdrop-blur flex items-center justify-between border-t border-slate-800">
+            <div class="flex items-center gap-2">
+                <div class="relative w-3 h-3">
+                    <div class="absolute inset-0 bg-emerald-500 rounded-full"></div>
+                    <div class="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-50"></div>
+                </div>
+                <span class="text-slate-400 text-xs">Hệ thống đang quét...</span>
+            </div>
+            <span id="clockDisplay" class="text-slate-500 text-xs"></span>
+        </div>
+    </div>
+
+    <!-- right column: log -->
+    <div class="w-96 flex-shrink-0 flex flex-col bg-white border-l border-slate-200">
+        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
+            <div class="text-sm font-semibold text-slate-800">Điểm danh hôm nay</div>
+            <div class="text-xs text-slate-400 mt-0.5" id="dateDisplay"></div>
+        </div>
+
+        <div class="grid grid-cols-3 border-b border-slate-200">
+            <div class="py-3 text-center border-r border-slate-200">
+                <div id="countPresent" class="text-xl font-bold text-emerald-600">0</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Đã điểm danh</div>
+            </div>
+            <div class="py-3 text-center border-r border-slate-200">
+                <div id="countAbsent" class="text-xl font-bold text-amber-500">0</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Chưa điểm danh</div>
+            </div>
+            <div class="py-3 text-center">
+                <div id="countTotal" class="text-xl font-bold text-slate-700">0</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Tổng sinh viên</div>
+            </div>
+        </div>
+
+        <!-- Danh sách log -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Đã điểm danh -->
+            <div class="px-3 pt-3 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Vừa điểm danh
+            </div>
+            <ul id="presentList" class="divide-y divide-slate-100">
+  
+            </ul>
+            <!-- Chưa điểm danh -->
+            <div class="px-3 pt-4 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-t border-slate-100 mt-2">
+                Chưa điểm danh
+            </div>
+            <ul id="absentList" class="divide-y divide-slate-100 opacity-50">
+
+            </ul>
+        </div>
+
+        <!-- Nút xác nhận thủ công -->
+        <div class="p-3 border-t border-slate-200 bg-slate-50">
+            <button id="btnManual"
+                class="w-full py-3 bg-slate-900 text-yellow-400 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-800 active:scale-95 transition duration-200 shadow-md">
+                Xác nhận thủ công
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // đồng hồ 
+    function updateClock(){
+        const now = new Date();
+        document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        document.getElementById('dateDisplay').textContent = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
+    setInterval(updateClock, 1000)
+    updateClock();
+
+    // đổi màu badge
+    function changeFrameColor(colorType){
+        const edges = document.querySelectorAll('.focus-edge');
+        const box = document.getElementById('focusBox');
+
+        edges.forEach(el => el.classList.remove('border-emerald-400', 'border-amber-400', 'border-rose-500'));
+        box.classList.remove('border-emerald-400/30', 'border-amber-400/30', 'border-rose-500/30');
+
+        // Bơm màu mới
+        if (colorType === 'success') {
+            edges.forEach(el => el.classList.add('border-emerald-400'));
+            box.classList.add('border-emerald-400/30');
+        } else if (colorType === 'warning') {
+            edges.forEach(el => el.classList.add('border-amber-400'));
+            box.classList.add('border-amber-400/30');
+        } else { // error
+            edges.forEach(el => el.classList.add('border-rose-500'));
+            box.classList.add('border-rose-500/30');
+        }
+    }
+    // gọi api recognize
+    setInterval(() => {
+        fetch("{{url_for('public.recognize')}}",{method: 'POST'})
+        .then(res => res.json())
+        .then(data => {
+            const overlay = document.getElementById('resultOverlay');
+            const scanning = document.getElementById('scanningStatus');
+            const badge = document.getElementById('similarityBadge');
+            const matchdegree = document.getElementById('matchdegree');
+            let displaySim = data.similarity !== undefined ? Number(data.similarity).toFixed(1) : "0";
+
+            if (data.status === 'success' || data.status === 'already'){
+                changeFrameColor('success');
+
+                document.getElementById('resultName').textContent = '✓ ' + data.name;
+                document.getElementById('resultMSSV').textContent = 'MSSV: ' + data.student_id;
+                // document.getElementById('resultScore').textContent = 'Độ khớp: ' + data.similarity + '%';
+                document.getElementById('resultScore').textContent = 'Độ khớp: ' + Number(data.similarity).toFixed(1) + '%';
+
+                badge.classList.remove('hidden');
+                matchdegree.classList.remove('hidden');
+                // Dùng hàm .toFixed(1) để lấy đúng 1 số sau dấu phẩy
+                document.getElementById('similarityValue').textContent = Number(data.similarity).toFixed(1) + '%';
+                document.getElementById('similarityValue').className = 'text-xl font-bold text-emerald-400';
+                document.getElementById('similarityBar').className = 'h-full bg-emerald-400 rounded-full';
+                document.getElementById('similarityBar').style.width = data.similarity + '%';
+
+                overlay.classList.remove('hidden');
+                scanning.classList.add('hidden');
+            }
+            else if(data.status == 'unknown'){
+                overlay.classList.add('hidden');
+                badge.classList.remove('hidden');
+                scanning.classList.remove('hidden');
+
+                const scanTitle = scanning.querySelector('.font-medium');
+                const scanSub = scanning.querySelector('.text-sm');
+
+                document.getElementById('similarityValue').textContent = Number(data.similarity).toFixed(1) + '%';
+                document.getElementById('similarityBar').style.width = data.similarity + '%';
+
+                if (data.similarity > 50){
+                    changeFrameColor('warning');
+                    matchdegree.classList.remove('hidden');
+                    scanTitle.textContent = "Chưa thể xác định rõ...";
+                    scanTitle.className = "text-amber-400 text-base font-medium";
+                    // scanSub.textContent = `Độ khớp thấp (${data.similarity}%). Vui lòng đứng yên và nhìn thẳng.`;
+                    scanSub.textContent = `Độ khớp thấp (${Number(data.similarity).toFixed(1)}%). Vui lòng đứng yên và nhìn thẳng.`;
+                    document.getElementById('similarityValue').className = 'text-xl font-bold text-amber-400';
+                    document.getElementById('similarityBar').className = 'h-full bg-amber-400 rounded-full';
+                }
+                else {
+                    // ĐỔI KHUNG THÀNH ĐỎ (Không tìm thấy ai giống)
+                    matchdegree.classList.remove('hidden');
+                    changeFrameColor('error');
+                    scanTitle.textContent = "Cảnh báo: Người lạ!";
+                    scanTitle.className = "text-rose-500 text-base font-medium";
+                    scanSub.textContent = "Khuôn mặt chưa được đăng ký trong hệ thống.";
+
+                    document.getElementById('similarityValue').className = 'text-xl font-bold text-rose-500';
+                    document.getElementById('similarityBar').className = 'h-full bg-rose-500 rounded-full';
+                }
+            }
+            else {
+                // Mặc định (Không thấy mặt ai trong camera)
+                changeFrameColor('success'); // Trả về xanh lá mặc định
+                overlay.classList.add('hidden');
+                scanning.classList.remove('hidden');
+                badge.classList.remove('hidden');
+                matchdegree.classList.add('hidden');
+
+                document.getElementById('similarityValue').textContent = "Nhìn vào camera";
+                // document.getElementById('similarityValue').className = 'text-xs font-bold text-slate-400 mt-1';
+                document.getElementById('similarityValue').className = 'text-xs font-bold text-emerald-400 mt-1';
+
+                document.getElementById('similarityBar').style.width = '0%';
+                document.getElementById('similarityBar').className = 'h-full bg-slate-500 rounded-full';
+
+                scanning.querySelector('.font-medium').textContent = "Đang quét khuôn mặt...";
+                scanning.querySelector('.font-medium').className = "text-slate-300 text-base font-medium";
+                scanning.querySelector('.text-sm').textContent = "Vui lòng nhìn thẳng vào camera";
+            }
+        })
+        .catch(err => console.error("API Lỗi: ", err));
+    }, 3000);
+
+    // gọi api tải lại danh sách log
+    function refreshAttendanceList(){
+        fetch("{{url_for('public.get_recent_attendance')}}")
+        .then(res => res.json())
+        .then(data =>{
+            if (!data || !data.present || !data.absent) return;
+
+            const presentList = document.getElementById('presentList');
+            const absentList = document.getElementById('absentList');
+
+            presentList.innerHTML = '';
+            absentList.innerHTML = '';
+
+            data.present.forEach(s => {
+                presentList.innerHTML +=`
+                    <li class = "flex items-center gap-3 px-4 py-2.5">
+                        <div class = "w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xs font-semibold flex-shrink-0">${s.initials}</div>
+                        <div class = "flex-1 min-w-0">
+                            <div class = "text-sm font-medium text-slate-800 truncate">${s.name}</div>
+                            <div class = "text-xs text-slate-400">${s.time}</div>
+                        </div>
+                        <span class ="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">${s.similarity}</span>
+                    </li>`;
+            });
+
+            data.absent.forEach(s => {
+                absentList.innerHTML +=`
+                    <li class = "flex items-center gap-3 px-4 py-2.5">
+                        <div class ="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xs font-semibold flex-shrink-0">${s.initials}</div>
+                        <div class = "flex-1">
+                            <div class ="text-sm text-slate-500">${s.name}</div>
+                            <div class = "text-xs text-slate-400">${s.mssv}</div>
+                        </div>
+                    </li>`;
+            });
+
+            document.getElementById('countPresent').textContent = data.total_present;
+            document.getElementById('countAbsent').textContent = data.total_absent;
+            document.getElementById('countTotal').textContent = data.total_students;
+        });
+    }
+
+    setInterval(refreshAttendanceList, 5000);
+    refreshAttendanceList();
+</script>
+
+{% endblock %}

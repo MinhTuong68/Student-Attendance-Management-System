@@ -1,0 +1,13 @@
+Flask
+flask-sqlalchemy
+opencv-python
+mtcnn
+keras-facenet
+pandas
+openpyxl
+scipy
+python-dotenv
+flask-login
+tensorflow
+numpy
+Werkzeug

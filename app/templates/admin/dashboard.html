@@ -1,0 +1,318 @@
+{% extends "admin/base.html" %} {% block content %}
+<div class="flex-1 flex flex-col overflow-hidden">
+  <!-- Topbar -->
+  <header
+    class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-10"
+  >
+    <div>
+      <h2 class="text-base font-semibold text-slate-800">Dashboard</h2>
+      <p id="currentDate" class="text-xs text-slate-400">Đang cập nhập...</p>
+    </div>
+
+    <div
+      class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full"
+    >
+      <div
+        class="w-7 h-7 bg-slate-900 text-yellow-400 rounded-full flex items-center justify-center font-bold text-xs"
+      >
+        A
+      </div>
+      <span class="text-sm font-medium text-slate-700">admin</span>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-y-auto p-5 bg-slate-50 flex flex-col gap-4">
+    <!-- 4 stat cards -->
+    <div class="grid grid-cols-4 gap-3">
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">Tổng sinh viên</p>
+            <p id="adminTotal" class="text-2xl font-semibold text-slate-800">0</p>
+          </div>
+
+          <div
+            class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-users text-indigo-600"></i>
+          </div>
+        </div>
+        <p id="noFaceCount" class="text-xs text-slate-400 mt-2">0 chưa có ảnh</p>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">Điểm danh hôm nay</p>
+            <p id="adminPresent" class="text-2xl font-semibold text-emerald-600">0</p>
+          </div>
+
+          <div
+            class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-check text-emerald-600"></i>
+          </div>
+        </div>
+        <p id="presentPercent" class="text-xs text-slate-400 mt-2">0% tổng lớp</p>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">Vắng mặt</p>
+            <p id="adminAbsent" class="text-2xl font-semibold text-amber-500">0</p>
+          </div>
+
+          <div
+            class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-user-times text-amber-500"></i>
+          </div>
+        </div>
+        <p id="absentPercent" class="text-xs text-slate-400 mt-2">0% tổng lớp</p>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-slate-400 mb-1">Độ chính xác TB</p>
+            <p id="avgSimilarity" class="text-2xl font-semibold text-blue-600">0%</p>
+          </div>
+
+          <div
+            class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-columns text-blue-600"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">Cosine similarity</p>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium text-slate-700"
+          >Tỉ lệ điểm danh hôm nay</span
+        >
+        <span id="progressText" class="text-sm font-medium text-emerald-600"
+          >0 / 0 sinh viên</span
+        >
+      </div>
+
+      <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+        <div
+            id="progressBar"
+          class="h-full bg-emerald-500 rounded-full"
+          style="width: 0%"
+        ></div>
+      </div>
+
+      <div class="flex gap-4 mt-2">
+        <div class="flex items-center gap-1.5 text-xs text-slate-400">
+          <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span id ="present_id"></span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-slate-400">
+          <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+          <span id="absent_id"></span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-slate-400">
+          <div class="w-2 h-2 rounded-full bg-indigo-400"></div>
+          Thủ công (0)
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 bảng dưới -->
+    <div class="grid grid-cols-5 gap-3 flex-1">
+      <!-- Log điểm danh -->
+      <div class="col-span-3 bg-white border border-slate-200 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-sm font-semibold text-slate-700"
+            >Log điểm danh gần đây</span
+          >
+          <a
+            href="{{ url_for('admin.download_today_excel') }}"
+            class="text-xs text-blue-600 hover:underline flex items-center gap-1"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Xuất Excel
+          </a>
+        </div>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100">
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                Sinh viên
+              </th>
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                Giờ vào
+              </th>
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                Độ khớp
+              </th>
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                Kiểu
+              </th>
+
+              <th class="text-center text-xs font-medium text-slate-400 pb-2">Xóa</th>
+            </tr>
+          </thead>
+
+          <tbody id="logTableBody" class="divide-y divide-slate-50">
+            <tr>
+              <td colspan="4" class="text-center py-4 text-slate-400 text-xs">
+                Đang tải dữ liệu...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Chưa điểm danh -->
+      <div class="col-span-2 bg-white border border-slate-200 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-sm font-semibold text-slate-700"
+            >Chưa điểm danh</span
+          >
+          <span
+            id="adminAbsent" class="bg-amber-50 text-amber-600 text-xs font-semibold px-2 py-0.5 rounded-full"
+          >0</span>
+        </div>
+
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100">
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                Họ tên
+              </th>
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                MSSV
+              </th>
+              <th class="text-left text-xs font-medium text-slate-400 pb-2">
+                Ảnh
+              </th>
+            </tr>
+          </thead>
+
+          <tbody id="absentTableBody" class="divide-y divide-slate-50">
+            <tr>
+              <td colspan="3" class="text-center py-4 text-slate-400 text-xs">
+                Đang tải dữ liệu...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+    function loadAdminDashboard() {
+        fetch("{{url_for('public.get_recent_attendance')}}")
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.error) return;
+
+            const logTable = document.getElementById("logTableBody");
+            logTable.innerHTML = "";
+
+            if (data.present.length == 0) {
+            logTable.innerHTML =
+                '<tr><td colspan="5" class="text-center py-4 text-slate-400 text-xs">Đang tải dữ liệu...</td></tr>';
+            } else {
+            data.present.forEach((s) => {
+                logTable.innerHTML += `
+                    <tr>
+                        <td class="py-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold">${s.initials}</div>
+                                <span class="text-slate-700">${s.name}</span>
+                            </div>
+                        </td>
+                        <td class="py-2 text-slate-400 text-xs">${s.time}</td>
+                        <td class="py-2"><span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">${s.similarity}</span></td>
+                        <td class="py-2"><span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">auto</span></td>   
+
+                        <td class="py-2 text-center">
+                            <button onclick="deleteLog(${s.log_id})" class="text-rose-500 hover:text-rose-700 transition-all" title="Xóa bản ghi">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            }
+
+            const absentTable = document.getElementById("absentTableBody");
+            absentTable.innerHTML = "";
+
+            if (data.absent.length == 0) {
+            absentTable.innerHTML =
+                '<tr><td colspan="3" class="text-center py-4 text-slate-400 text-xs">Lớp đã đi học đầy đủ.</td></tr>';
+            } else {
+            data.absent.forEach((s) => {
+                absentTable.innerHTML += `
+                <tr>
+                    <td class="py-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-semibold">${s.initials}</div>
+                            <span class="text-slate-600">${s.name}</span>
+                        </div>
+                    </td>
+                    <td class="py-2 text-slate-400 text-xs">${s.mssv}</td>
+                    <td class="py-2"><span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">✓</span></td>
+                </tr>`;
+            });
+            }
+            document.getElementById("adminTotal").textContent = data.total_students;
+            document.getElementById("adminPresent").textContent =
+            data.total_present;
+            document.getElementById("adminAbsent").textContent = data.total_absent;
+
+            // document.getElementById("badgeAbsent").textContent = data.total_absent + " sv";
+
+            document.getElementById("noFaceCount").textContent = data.no_face_count + " chưa có ảnh";
+            document.getElementById("presentPercent").textContent = data.present_percent + "% tổng lớp";
+            document.getElementById("absentPercent").textContent = data.absent_percent + "% tổng lớp";
+            document.getElementById("avgSimilarity").textContent = data.avg_similarity + "%";
+
+            document.getElementById("progressText").textContent = `${data.total_present} / ${data.total_students} sinh viên`;
+            document.getElementById("progressBar").style.width = `${data.present_percent}%`;
+            document.getElementById("absent_id").textContent = `vắng (${data.total_absent})`;
+            document.getElementById("present_id").textContent = `Đã điểm danh (${data.total_present})`;
+        });
+    }
+
+    function deleteLog(logId){
+        if (!confirm("Bạn có chắc chắn muốn xóa log điểm danh này? Số liệu thống kê sẽ bị thay đổi.")) return;
+
+        fetch(`/admin/delete_attendance/${logId}`,{
+            method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success'){
+                loadAdminDashboard();
+            } else{
+                alert("Lỗi không thể xóa!")
+            }
+        })
+        .catch(err => console.error("Lỗi xóa log:", err));
+    }
+
+  loadAdminDashboard();
+  setInterval(loadAdminDashboard, 5000);
+</script>
+{% endblock %}
